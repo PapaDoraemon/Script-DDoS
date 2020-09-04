@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ACE Autocompletion demo</title>
+  <style type="text/css" media="screen">
+    body {
+        overflow: hidden;
+    }
+    
+    #editor { 
+        margin: 0;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+  </style>
+</head>
+<body>
+<pre id="editor">#!/bin/bash
+
+function clone(){
+	echo &quot;Make sure that you have php 5 installed on your system&quot;
+	echo &quot;Cloning latest version of DVWA from GitHub&quot;
+        git clone https://github.com/ethicalhack3r/DVWA.git $webroot/dvwa
+        echo &quot;Setting dvwa configuration&quot;
+	sudo chmod -R 777 $webroot/dvwa
+        sed -i '2 c $dvwa_WEBROOT = &quot;'$webroot'&quot;;' $webroot/dvwa/config/config.inc.php
+        sed -i '17 c $_DVWA[ 'db_user' ] = &quot;'$uname'&quot;;' $webroot/dvwa/config/config.inc.php
+        sed -i '18 c $_DVWA[ 'db_password' ] = &quot;'$pass'&quot;;' $webroot/dvwa/config/config.inc.php
+
+        #creating database
+        echo &quot;Creating dvwa database&quot;
+        mysql -u $uname -p$pass -e &quot;CREATE DATABASE IF NOT EXISTS dvwa&quot;
+        echo &quot;dvwa Setup Finished Successfully. Happy hacking and happy learning !&quot;
+}
+
+
+#checking mysql is installed
+isMYSQL=$(apt-cache show mysql-server | grep 'Version');
+if [[ $isMYSQL == *&quot;No packages found&quot;* ]]; then
+	echo -n &quot;MySQL Package Not Found. Do you want to install (Y/N)?&quot;
+	read mysql_flag
+	if [ $mysql_flag == &quot;Y&quot; ] || [ $mysql_flag == &quot;y&quot; ]; then
+		echo &quot;Installing MySQL Server. This might take a while.&quot;
+		sudo apt-get install mysql-server
+	else
+		echo &quot;dvwa Setup Terminated. MySQL is a must requirement for dvwa to run&quot;
+		exit 0
+	fi
+else
+	echo &quot;MySQL found with &quot;$isMYSQL
+fi
+#checking apache is installed
+isApache=$(apt-cache show apache2 | grep 'Version');
+if [[ $isApache == *&quot;No packages found&quot;* ]]; then
+        echo -n &quot;Apache Package Not Found. Do you want to install (Y/N)?&quot;
+	read apache_flag
+	if [ $apache_flag == &quot;Y&quot; ] || [ $apache_flag == &quot;y&quot; ]; then
+		echo &quot;Installing Apache. This might take a while.&quot;
+		sudo apt-get install apache2
+	else
+		echo &quot;dvwa Setup Terminated. Apache is a must requirement for dvwa to run&quot;
+		exit 0
+	fi
+else
+        echo &quot;Apache found with &quot;$isApache
+fi
+
+#asserting mysql and apache services
+MYSQL=$(pgrep mysql | wc -l);
+if [ &quot;$MYSQL&quot; -eq 0 ]; then
+        echo &quot;MySQL is down. Starting MySQL Service&quot;;
+        sudo service mysql start
+fi
+APACHE=$(pgrep apache | wc -l);
+if [ &quot;$APACHE&quot; -eq 0 ]; then
+        echo &quot;Apache is down. Starting Apache Service&quot;;
+        sudo service apache2 start
+fi
+
+#configuring mysql and apache for dvwa
+echo -n &quot;Enter mysql username : &quot;
+read uname
+echo -n &quot;Enter mysql password : &quot;
+read pass
+echo -n &quot;Enter the full web root path : &quot;
+read webroot
+
+#cloning latest version of dvwa from  GitHub
+if [[ -d $webroot/dvwa ]]; then
+	echo -n &quot;Folder &quot;$webroot&quot;/dvwa already exists. Do you want to clean and build a fresh latest copy ? (Y/N)&quot;
+	read clean_flag
+	if [ $clean_flag == &quot;Y&quot; ] || [ $clean_flag == &quot;y&quot;]; then
+		echo &quot;Cleaning up old copy&quot;
+		rm -rf $webroot/dvwa
+		clone
+	else
+		echo &quot;dvwa Setup Terminated.&quot;
+	fi
+else
+	clone
+fi</pre>
+
+<!-- load ace -->
+<script src="file:///android_asset/src-noconflict/ace.js"></script>
+<!-- load ace language tools -->
+<script src="file:///android_asset/src-noconflict/ext-language_tools.js"></script>
+<script>
+    // trigger extension
+    ace.require("ace/ext/language_tools");
+    var editor = ace.edit("editor");
+    editor.session.setMode("ace/mode/c_cpp");
+    editor.setShowPrintMargin(false);
+    editor.getSession().setUseWrapMode(true);
+    var code = editor.getValue();
+    //editor.setValue("new code " + code);
+    //enable autocompletion and snippets
+    editor.setOptions({
+        enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: true
+    });
+</script>
+</body>
+</html>

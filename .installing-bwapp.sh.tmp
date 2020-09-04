@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ACE Autocompletion demo</title>
+  <style type="text/css" media="screen">
+    body {
+        overflow: hidden;
+    }
+    
+    #editor { 
+        margin: 0;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+  </style>
+</head>
+<body>
+<pre id="editor">#!/bin/bash
+
+function clone(){
+	echo &quot;Make sure that you have php 5 installed on your system&quot;
+	echo &quot;Cloning latest version of bwapp from Sourceforge&quot;
+        wget http://nchc.dl.sourceforge.net/project/bwapp/bWAPP/bWAPP_latest.zip
+	unzip bWAPP_latest.zip
+	mv bWAPP/ bwapp
+	mv bwapp /var/www/html
+	rm -rf apache2
+	rm -rf evil
+	rm  bWAPP_latest.zip
+	rm bWAPP_intro.pdf ClientAccessPolicy.xml crossdomain.xml INSTALL.txt README.txt release_notes.txt  
+        echo &quot;Setting bwapp configuration&quot;
+	sudo chmod -R 777 $webroot/bwapp
+        sed -i '2 c $bwapp_WEBROOT = &quot;'$webroot'&quot;;' $webroot/bwapp/admin/settings.php
+        sed -i '21 c $db_username = &quot;'$uname'&quot;;' $webroot/bwapp/admin/settings.php
+        sed -i '22 c $db_password = &quot;'$pass'&quot;;' $webroot/bwapp/admin/settings.php
+
+        
+        echo &quot;bwapp Setup Finished Successfully. Happy hacking and happy learning !&quot;
+}
+
+
+#checking mysql is installed
+isMYSQL=$(apt-cache show mysql-server | grep 'Version');
+if [[ $isMYSQL == *&quot;No packages found&quot;* ]]; then
+	echo -n &quot;MySQL Package Not Found. Do you want to install (Y/N)?&quot;
+	read mysql_flag
+	if [ $mysql_flag == &quot;Y&quot; ] || [ $mysql_flag == &quot;y&quot; ]; then
+		echo &quot;Installing MySQL Server. This might take a while.&quot;
+		sudo apt-get install mysql-server
+	else
+		echo &quot;bwapp Setup Terminated. MySQL is a must requirement for bwapp to run&quot;
+		exit 0
+	fi
+else
+	echo &quot;MySQL found with &quot;$isMYSQL
+fi
+#checking apache is installed
+isApache=$(apt-cache show apache2 | grep 'Version');
+if [[ $isApache == *&quot;No packages found&quot;* ]]; then
+        echo -n &quot;Apache Package Not Found. Do you want to install (Y/N)?&quot;
+	read apache_flag
+	if [ $apache_flag == &quot;Y&quot; ] || [ $apache_flag == &quot;y&quot; ]; then
+		echo &quot;Installing Apache. This might take a while.&quot;
+		sudo apt-get install apache2
+	else
+		echo &quot;bwapp Setup Terminated. Apache is a must requirement for bwapp to run&quot;
+		exit 0
+	fi
+else
+        echo &quot;Apache found with &quot;$isApache
+fi
+
+#asserting mysql and apache services
+MYSQL=$(pgrep mysql | wc -l);
+if [ &quot;$MYSQL&quot; -eq 0 ]; then
+        echo &quot;MySQL is down. Starting MySQL Service&quot;;
+        sudo service mysql start
+fi
+APACHE=$(pgrep apache | wc -l);
+if [ &quot;$APACHE&quot; -eq 0 ]; then
+        echo &quot;Apache is down. Starting Apache Service&quot;;
+        sudo service apache2 start
+fi
+
+#configuring mysql and apache for bwapp
+echo -n &quot;Enter mysql username : &quot;
+read uname
+echo -n &quot;Enter mysql password : &quot;
+read pass
+echo -n &quot;Enter the full web root path : &quot;
+read webroot
+
+#cloning latest version of bwapp from  GitHub
+if [[ -d $webroot/bwapp ]]; then
+	echo -n &quot;Folder &quot;$webroot&quot;/bwapp already exists. Do you want to clean and build a fresh latest copy ? (Y/N)&quot;
+	read clean_flag
+	if [ $clean_flag == &quot;Y&quot; ] || [ $clean_flag == &quot;y&quot;]; then
+		echo &quot;Cleaning up old copy&quot;
+		rm -rf $webroot/bwapp
+		clone
+	else
+		echo &quot;bwapp Setup Terminated.&quot;
+	fi
+else
+	clone
+fi</pre>
+
+<!-- load ace -->
+<script src="file:///android_asset/src-noconflict/ace.js"></script>
+<!-- load ace language tools -->
+<script src="file:///android_asset/src-noconflict/ext-language_tools.js"></script>
+<script>
+    // trigger extension
+    ace.require("ace/ext/language_tools");
+    var editor = ace.edit("editor");
+    editor.session.setMode("ace/mode/c_cpp");
+    editor.setShowPrintMargin(false);
+    editor.getSession().setUseWrapMode(true);
+    var code = editor.getValue();
+    //editor.setValue("new code " + code);
+    //enable autocompletion and snippets
+    editor.setOptions({
+        enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: true
+    });
+</script>
+</body>
+</html>
